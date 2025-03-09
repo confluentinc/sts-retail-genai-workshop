@@ -92,7 +92,7 @@ An environment contains clusters and its deployed components such as Apache Flin
 3. Chose the **Basic** cluster type. 
 
 <div align="center" padding=25px>
-    <img src="images/cluster-type.png" width=50% height=50%>
+    <img src="images/cluster-type.png" width=90% height=90%>
 </div>
 
 4. Click **Begin Configuration**. 
@@ -100,7 +100,7 @@ An environment contains clusters and its deployed components such as Apache Flin
 6. Specify a **Cluster Name**. For the purpose of this lab, any name will work here. 
 
 <div align="center" padding=25px>
-    <img src="images/create-cluster.png" width=50% height=50%>
+    <img src="images/create-cluster.png" width=70% height=70%>
 </div>
 
 7. View the associated *Configuration & Cost*, *Usage Limits*, and *Uptime SLA* information before launching. 
@@ -113,18 +113,18 @@ An environment contains clusters and its deployed components such as Apache Flin
 1. On the navigation menu, select **Flink** and click **Create Compute Pool**.
 
 <div align="center" padding=25px>
-    <img src="images/create-flink-pool-1.png" width=50% height=50%>
+    <img src="images/create-flink-pool-1.png" width=60% height=60%>
 </div>
 
 2. Select **Region** and then **Continue**. (You have to use the region where the cluster was created in the previous step)
 <div align="center" padding=25px>
-    <img src="images/create-flink-pool-2.png" width=50% height=50%>
+    <img src="images/create-flink-pool-2.png" width=60% height=60%>
 </div>
 
 3. Name you Pool Name and set the capacity units (CFUs) to **10**. Click **Finish**.
 
 <div align="center" padding=25px>
-    <img src="images/create-flink-pool-3.png" width=50% height=50%>
+    <img src="images/create-flink-pool-3.png" width=60% height=60%>
 </div>
 
 > **Note:** The capacity of a compute pool is measured in CFUs. Compute pools expand and shrink automatically based on the resources required by the statements using them. A compute pool without any running statements scale down to zero. The maximum size of a compute pool is configured during creation. 
@@ -134,19 +134,19 @@ An environment contains clusters and its deployed components such as Apache Flin
 5. Change your workspace name by clicking **settings button**. Click **Save changes** after you update the workspace name.
 
 <div align="center" padding=25px>
-    <img src="images/flink-workspace-1.png" width=50% height=50%>
+    <img src="images/flink-workspace-1.png" width=90% height=90%>
 </div>
 
 6. Set the Catalog as your environment name.
 
 <div align="center" padding=25px>
-    <img src="images/flink-workspace-2.png" width=50% height=50%>
+    <img src="images/flink-workspace-2.png" width=60% height=60%>
 </div>
 
 7. Set the Database as your cluster name.
 
 <div align="center" padding=25px>
-    <img src="images/flink-workspace-3.png" width=50% height=50%>
+    <img src="images/flink-workspace-3.png" width=60% height=60%>
 </div>
 
 ***

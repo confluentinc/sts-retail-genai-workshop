@@ -12,14 +12,14 @@
 3. [Create Flink Compute Pool](#step-3)
 4. [Create Topics and walk through Confluent Cloud Dashboard](#step-4)
 5. [Create an API Key Pair](#step-5)
-6. [Create Datagen Connectors for Shoes orders and clickstream](#step-5)
-7. [Create MongoDB Source Connector for shoes and customers details](#step-6)
-8. [Stream Processing with Flink for getting trendy products, customer segements, and combine the records into one topic](#step-6)
-9. [Consume final topic and recommend shoes to customers](#step-7)
-10. [Connect Flink with Gemini](#step-8)
-11. [Elasticsearch Monitoring](#step-9)
-12. [Clean Up Resources](#step-10)
-13. [Confluent Resources and Further Testing](#step-11)
+6. [Create Datagen Connectors for Shoes orders and clickstream](#step-6)
+7. [Create MongoDB Source Connector for shoes and customers details](#step-7)
+8. [Stream Processing with Flink for getting trendy products, customer segements, and combine the records into one topic](#step-8)
+9. [Consume final topic and recommend shoes to customers](#step-9)
+10. [Connect Flink with Gemini](#step-10)
+11. [Elasticsearch Monitoring](#step-11)
+12. [Clean Up Resources](#step-12)
+13. [Confluent Resources and Further Testing](#step-13)
 ***
 
 ## **Prerequisites**
@@ -177,8 +177,8 @@ An environment contains clusters and its deployed components such as Apache Flin
 
 ## <a name="step-5"></a>Create an API Key
 
-1. Click on the hamburger icon (three horizontal lines) in the top right of the screen.
-2. Click **API Keys** in the menu under *Administration*.
+1. Open the cluster page.
+2. Click **API Keys** in the menu under *Cluster Overview*.
 3. Click **Create Key** in order to create your first API Key. If you have an existing API Key, click **+ Add Key** to create another API Key.
 
 <div align="center" padding=25px>
@@ -186,21 +186,16 @@ An environment contains clusters and its deployed components such as Apache Flin
 </div>
 
 4. Select **My account** and then click **Next**.
-5. Select **Kafka cluster**, then select your workshop environment and cluster under the *Specify Kafka cluster* dropdowns. Click **Next**.
+5. Enter a description for your API Key (e.g. `API Key to source data from connectors`).
 
 <div align="center" padding=25px>
-    <img src="images/create-apikey-resource-scope.png" width=75% height=75%>
+    <img src="images/create-apikey-download.png" width=75% height=75%>
 </div>
 
-6. Give your API Key a name, something like `client-apikey`.
-7. Enter a description for your API Key (e.g. `API Key to source data from connectors`).
-8. Click **Create API Key**.
-9. Click **Download API key** to save both the *Key* and *Secret* to your computer.
-10. Click **Complete**.
-11. After creating and saving the API key, you will see this API key in the Confluent Cloud UI in the *API Keys* table. If you don't see the API key populate right away, try refreshing your browser.
+6. After creating and saving the API key, you will see this API key in the Confluent Cloud UI in the *API Keys* table. If you don't see the API key populate right away, try refreshing your browser.
 
 
-## <a name="step-6"></a>Create Datagen Connectors for Users and Stocks
+## <a name="step-6"></a>Create Datagen Connectors for Shoes Orders and Shoes Clickstream
 
 The next step is to produce sample data using the Datagen Source connector. You will create two Datagen Source connectors.
 
@@ -234,14 +229,15 @@ The first connector will send sample shoe orders data to the **shoes_orders** to
 <br>
 
 <div align="center" padding=25px>
-    <img src="images/datagen-configuration.png" width=75% height=75%>
+    <img src="images/datagen-config-1.png" width=75% height=75%>
+</div>
+
+<div align="center" padding=25px>
+    <img src="images/datagen-config-2.png" width=75% height=75%>
 </div>
 
 6. Continue through the setup wizard and click **Continue** to launch the wizard.
 
-<div align="center" padding=25px>
-    <img src="images/datagen-user-success.png" width=75% height=75%>
-</div>
 
 7. Next, create the second connector that will send data to **shoes_clickstream**. Click on **+ Add Connector** and then the **Datagen Source** icon again.
 
@@ -264,6 +260,7 @@ The first connector will send sample shoe orders data to the **shoes_orders** to
 <br>
 
 9. Review your selections and then click **Launch**.
+
 
 > **Note:** It may take a few moments for the connectors to launch. Check the status and when both are ready, the status should show *running*. <br> <div align="center"><img src="images/running-connectors.png" width=75% height=75%></div>
 

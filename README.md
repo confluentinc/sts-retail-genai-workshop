@@ -15,11 +15,10 @@
 6. [Create Datagen Connectors for Shoes orders and clickstream](#step-6)
 7. [Create Atlas MongoDB Source Connector for shoes and customers details](#step-7)
 8. [Stream Processing with Flink for getting trendy products, customer segements, and combine the records into one topic](#step-8)
-9. [Consume final topic and recommend shoes to customers](#step-9)
-10. [Connect Flink with Gemini](#step-10)
-11. [Elasticsearch Monitoring](#step-11)
-12. [Clean Up Resources](#step-12)
-13. [Confluent Resources and Further Testing](#step-13)
+9. [Consume final topic and recommend shoes to customers with google gemini](#step-9)
+10. [Elasticsearch Monitoring](#step-10)
+11. [Clean Up Resources](#step-11)
+12. [Confluent Resources and Further Testing](#step-12)
 ***
 
 ## **Prerequisites**
@@ -320,3 +319,118 @@ The next step is to get initial shoes and customer data from MongoDB.
 
 
 > **Note:** It may take a few moments for the connectors to launch. Check the status and when both are ready, the status should show *running*. <br> <div align="center"><img src="images/mongo-2.png" width=75% height=75%></div>
+
+## <a name="step-8"></a>Stream Processing with Flink for getting trendy products, customer segements, and combine the records into one topic
+
+Kafka topics and schemas are always in sync with our Flink cluster. Any topic created in Kafka is visible directly as a table in Flink, and any table created in Flink is visible as a topic in Kafka. Effectively, Flink provides a SQL interface on top of Confluent Cloud.
+
+1. From the Confluent Cloud UI, click on the **Environments** tab on the navigation menu. Choose your environment.
+2. Click on *Flink* from the menu pane
+3. Choose the compute pool created in the previous steps.
+4. Click on **Open SQL workspace** button on the top right.
+5. Create trendy shoes tables within a defined tme period by running the following SQL queries.
+
+```sql
+CREATE TABLE top_products_every_minute ( 
+    product_id STRING, 
+    view_count BIGINT, 
+    avg_view_time DOUBLE, 
+    window_start TIMESTAMP_LTZ(3), 
+    window_end TIMESTAMP_LTZ(3) 
+    );
+```
+
+```sql
+INSERT  INTO top_products_every_minute 
+    WITH ProductStats AS ( 
+        SELECT product_id, 
+        COUNT(*) AS view_count, 
+        AVG(view_time) AS avg_view_time, 
+        window_start, window_end FROM TABLE( 
+        TUMBLE(TABLE shoes_clickstream, DESCRIPTOR(`$rowtime`), INTERVAL '1' MINUTE) 
+        ) 
+        GROUP BY product_id, window_start, window_end ), 
+
+    RankedProducts AS ( 
+        SELECT product_id, view_count, avg_view_time, 
+        window_start, window_end, ROW_NUMBER() OVER ( 
+        PARTITION BY window_start, window_end ORDER BY view_count DESC, avg_view_time DESC ) AS ranking 
+        FROM ProductStats ) 
+
+    SELECT product_id, view_count, avg_view_time, 
+    window_start, window_end FROM RankedProducts 
+    WHERE ranking <= 5;
+```
+
+```sql
+CREATE TABLE results_aggregated_every_minute_without_window AS 
+    SELECT  LISTAGG(`brand`,'\n') OVER( 
+        PARTITION BY window_start,window_end  
+        ORDER BY `$rowtime` RANGE BETWEEN INTERVAL '1' MINUTE PRECEDING AND CURRENT ROW ) AS `brands`, 
+        LISTAGG(name,'\n') OVER( 
+        PARTITION BY window_start,window_end 
+        ORDER BY `$rowtime` RANGE BETWEEN INTERVAL '1' MINUTE PRECEDING AND CURRENT ROW ) AS `names`, 
+        SUM(view_count) OVER( 
+        PARTITION BY window_start,window_end 
+        ORDER BY `$rowtime` RANGE BETWEEN INTERVAL '1' MINUTE PRECEDING AND CURRENT ROW ) AS `collective_view_count` 
+    FROM top_products_joined_minute;
+```
+
+```sql
+CREATE TABLE latest_trends AS 
+    SELECT `brands`,`names`, 
+    `collective_view_count`, `row_num`,
+    window_start,window_end FROM ( 
+        SELECT *, ROW_NUMBER() OVER (
+        PARTITION BY window_start, window_end ORDER BY $rowtime DESC) AS row_num 
+        FROM TABLE(
+        TUMBLE(TABLE `results_aggregated_every_minute_without_window`, DESCRIPTOR($rowtime), INTERVAL '1' MINUTE)) ) 
+    where row_num<=1;
+```
+
+
+```sql
+CREATE TABLE SEGMENTATION AS 
+    SELECT customer_id, `$rowtime` as event_rtime, COUNT(order_id) OVER ( 
+    PARTITION BY customer_id ORDER BY `$rowtime` 
+    RANGE BETWEEN INTERVAL '5' MINUTE PRECEDING AND CURRENT ROW ) AS orders, 
+    CASE 
+        WHEN COUNT(order_id) OVER ( 
+            PARTITION BY customer_id ORDER BY `$rowtime` 
+            RANGE BETWEEN INTERVAL '5' MINUTE PRECEDING AND CURRENT ROW ) > 3 
+        THEN 'Frequent Shopper' 
+        WHEN COUNT(order_id) OVER ( 
+            PARTITION BY customer_id ORDER BY `$rowtime` 
+            RANGE BETWEEN INTERVAL '5' MINUTE PRECEDING AND CURRENT ROW ) BETWEEN 2 AND 3 
+        THEN 'Emerging Shopper' 
+        ELSE 'Occasional Buyer' END AS customer_segment 
+    FROM shoes_orders;
+```
+
+```sql
+CREATE TABLE PROMPT_DATA AS 
+    select * from `SEGMENTATION` as s , 
+    latest_trends as lt 
+    where s.event_rtime BETWEEN lt.window_start AND lt.window_end;
+```
+
+## <a name="step-9"></a>Consume final topic and recommend shoes to customers with google gemini
+
+
+```sql
+CREATE MODEL RECOMMENDATION 
+INPUT (`text` VARCHAR(2147483647)) 
+OUTPUT (`output` VARCHAR(2147483647)) 
+WITH ( 
+    'googleai.connection' = 'googleai-ai-connection', 
+    'googleai.system_prompt' = 'Based upon the data received from the Input, Recommend a product to the customer based upon the customer_segment , brands,names,collective_view_count', 
+    'provider' = 'googleai', 
+    'task' = 'text_generation' 
+    );
+```
+
+```sql
+SELECT * FROM PROMPT_DATA, 
+LATERAL TABLE( 
+    ML_PREDICT('RECOMMENDATION', 'USER DETAILS:' || 'orders->' || CAST(orders as STRING) || ',' || 'customer_segment' ',' || 'Trends:' || brands || ',' || names || ',' || 'view_count -->' || CAST(collective_view_count as STRING)));
+```

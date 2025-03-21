@@ -11,13 +11,15 @@
 2. [Create an Environment and Cluster](#step-2)
 3. [Create Flink Compute Pool](#step-3)
 4. [Create Topics and walk through Confluent Cloud Dashboard](#step-4)
-5. [Create Datagen Connectors for Shoes , customers , orders and clickstream](#step-5)
-6. [Perform complex joins using Flink to combine the records into one topic](#step-6)
-7. [Consume final topic and recommend shoes to customers](#step-7)
-8. [Connect Flink with Gemini](#step-8)
-9. [Elasticsearch Monitoring](#step-9)
-10. [Clean Up Resources](#step-10)
-11. [Confluent Resources and Further Testing](#step-11)
+5. [Create an API Key Pair](#step-5)
+6. [Create Datagen Connectors for Shoes orders and clickstream](#step-5)
+7. [Create MongoDB Source Connector for shoes and customers details](#step-6)
+8. [Stream Processing with Flink for getting trendy products, customer segements, and combine the records into one topic](#step-6)
+9. [Consume final topic and recommend shoes to customers](#step-7)
+10. [Connect Flink with Gemini](#step-8)
+11. [Elasticsearch Monitoring](#step-9)
+12. [Clean Up Resources](#step-10)
+13. [Confluent Resources and Further Testing](#step-11)
 ***
 
 ## **Prerequisites**
@@ -150,3 +152,132 @@ An environment contains clusters and its deployed components such as Apache Flin
 </div>
 
 ***
+
+## <a name="step-4"></a>Creates Topic and Walk Through Cloud Dashboard
+
+1. On the navigation menu, you will see **Cluster Overview**. 
+
+> **Note:** This section shows Cluster Metrics, such as Throughput and Storage. This page also shows the number of Topics, Partitions, Connectors, and ksqlDB Applications.
+
+2. Click on **Cluster Settings**. This is where you can find your *Cluster ID, Bootstrap Server, Cloud Details, Cluster Type,* and *Capacity Limits*.
+3. On the same navigation menu, select **Topics** and click **Create Topic**. 
+4. Enter **shoes_orders** as the topic name, **3** as the number of partitions, skip the data contract and then click **Create with defaults**.'
+
+<div align="center" padding=25px>
+    <img src="images/create-topic.png" width=50% height=50%>
+</div>
+
+5. Repeat the previous step and create a second topic name **shoes_clickstream** and **3** as the number of partitions and skip the data contract.
+
+> **Note:** Topics have many configurable parameters. A complete list of those configurations for Confluent Cloud can be found [here](https://docs.confluent.io/cloud/current/using/broker-config.html). If you are interested in viewing the default configurations, you can view them in the Topic Summary on the right side. 
+
+7. After topic creation, the **Topics UI** allows you to monitor production and consumption throughput metrics and the configuration parameters for your topics. When you begin sending messages to Confluent Cloud, you will be able to view those messages and message schemas.
+
+***
+
+## <a name="step-5"></a>Create an API Key
+
+1. Click on the hamburger icon (three horizontal lines) in the top right of the screen.
+2. Click **API Keys** in the menu under *Administration*.
+3. Click **Create Key** in order to create your first API Key. If you have an existing API Key, click **+ Add Key** to create another API Key.
+
+<div align="center" padding=25px>
+    <img src="images/create-apikey-updated.png" width=75% height=75%>
+</div>
+
+4. Select **My account** and then click **Next**.
+5. Select **Kafka cluster**, then select your workshop environment and cluster under the *Specify Kafka cluster* dropdowns. Click **Next**.
+
+<div align="center" padding=25px>
+    <img src="images/create-apikey-resource-scope.png" width=75% height=75%>
+</div>
+
+6. Give your API Key a name, something like `client-apikey`.
+7. Enter a description for your API Key (e.g. `API Key to source data from connectors`).
+8. Click **Create API Key**.
+9. Click **Download API key** to save both the *Key* and *Secret* to your computer.
+10. Click **Complete**.
+11. After creating and saving the API key, you will see this API key in the Confluent Cloud UI in the *API Keys* table. If you don't see the API key populate right away, try refreshing your browser.
+
+
+## <a name="step-6"></a>Create Datagen Connectors for Users and Stocks
+
+The next step is to produce sample data using the Datagen Source connector. You will create two Datagen Source connectors.
+
+The first connector will send sample shoe orders data to the **shoes_orders** topic, while the second connector will send shoes clickstream data to the **shoes_clickstream** topic.
+
+1. First, navigate to your workshop cluster.
+2. Next, click on the **Connectors** link on the navigation menu.
+3. Now click on the **Datagen Source** icon.
+
+<div align="center" padding=25px>
+    <img src="images/connectors.png" width=75% height=75%>
+</div>
+
+4. Click the **Additional Configuration** link.
+5. Enter the following configuration details in the setup wizard. The remaining fields can be left blank or default.
+<div align="center">
+
+| Setting                            | Value                        |
+|------------------------------------|------------------------------|
+| Topic                              | shoes_orders                 |
+| API Key                            | [*from step 5*](#step-5)     |
+| API Secret                         | [*from step 5*](#step-5)     |
+| Output message format              | AVRO                         |
+| Quickstart                         | Shoe orders                  |
+| Max interval between messages (ms) | 1000                         |
+| Tasks                              | 1                            |
+| Name                               | shoe-orders-data-connector   |
+
+</div>
+
+<br>
+
+<div align="center" padding=25px>
+    <img src="images/datagen-configuration.png" width=75% height=75%>
+</div>
+
+6. Continue through the setup wizard and click **Continue** to launch the wizard.
+
+<div align="center" padding=25px>
+    <img src="images/datagen-user-success.png" width=75% height=75%>
+</div>
+
+7. Next, create the second connector that will send data to **shoes_clickstream**. Click on **+ Add Connector** and then the **Datagen Source** icon again.
+
+8. Enter the following configuration details. The remaining fields can be left blank or default.
+
+<div align="center">
+
+| Setting                            | Value                        |
+|------------------------------------|------------------------------|
+| API Key                            | [*from step 5* ](#step-5)    |
+| API Secret                         | [*from step 5* ](#step-5)    |
+| Topic                              | shoes_clickstream            |
+| Output message format              | AVRO                         |
+| Quickstart                         | Shoe clickstream             |
+| Max interval between messages (ms) | 1000                         |
+| Tasks                              | 1                            |
+| Name                               | shoe-clicks-data-connector   |
+</div>
+
+<br>
+
+9. Review your selections and then click **Launch**.
+
+> **Note:** It may take a few moments for the connectors to launch. Check the status and when both are ready, the status should show *running*. <br> <div align="center"><img src="images/running-connectors.png" width=75% height=75%></div>
+
+> **Note:** If the connector fails, there are a few different ways to troubleshoot the error:
+> * Click on the *Connector Name*. You will see a play and pause button on this page. Click on the play button.
+> * Click on the *Connector Name*, go to *Settings*, and re-enter your API key and secret. Double check there are no extra spaces at the beginning or end of the key and secret that you may have accidentally copied and pasted.
+> * If neither of these steps work, try creating another Datagen connector.
+
+
+10. You can view the sample data flowing into topics in real time. Navigate to  the **Topics** tab and then click on the **shoes_orders**. You can view the production and consumption throughput metrics here.
+
+11. Click on **Messages**.
+12. Click on a row in the table and you should see something like this:
+
+<div align="center">
+    <img src="images/message-view-1.png" width=75% height=75%>
+</div>

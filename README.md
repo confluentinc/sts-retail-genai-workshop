@@ -276,5 +276,5 @@ The first connector will send sample shoe orders data to the **shoes_orders** to
 12. Click on a row in the table and you should see something like this:
 
 <div align="center">
-    <img src="images/message-view-1.png" width=75% height=75%>
+    <img src="images/message-view-1.png" width=90% height=90%>
 </div>

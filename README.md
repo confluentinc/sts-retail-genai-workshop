@@ -438,12 +438,12 @@ confluent flink connection create googleai-ai-connection \
 2. Use the same connection to create a model in flink.
 
 ```sql
-CREATE MODEL RECOMMENDATION 
+CREATE MODEL RECOMMEND
 INPUT (`text` VARCHAR(2147483647)) 
 OUTPUT (`output` VARCHAR(2147483647)) 
 WITH ( 
     'googleai.connection' = 'googleai-ai-connection', 
-    'googleai.system_prompt' = 'Based upon the data received from the Input, Recommend a product to the customer based upon the customer_segment , brands,names,collective_view_count', 
+    'googleai.system_prompt' = 'Generate a personalized product recommendation message', 
     'provider' = 'googleai', 
     'task' = 'text_generation' 
     );
@@ -454,9 +454,19 @@ WITH (
 ```sql
 SELECT * FROM PROMPT_DATA, 
 LATERAL TABLE( 
-    ML_PREDICT('RECOMMENDATION', 'USER DETAILS:' || 'orders->' || 
-    CAST(orders as STRING) || ',' || 'customer_segment' ',' || 'Trends:' 
-    || brands || ',' || names || ',' || 'view_count -->' || 
-    CAST(collective_view_count as STRING))
+    ML_PREDICT('RECOMMEND' ,'Customer Segment:' || customer_segment || 
+    ' , Trending Brands:' || brands || 
+    ' , Trending Products:' || names || 
+    ' , \n Craft a concise, engaging message recommending one or two relevant products or brands. Tailor the tone to match the customer’s segment and include a compelling call-to-action to drive engagement.')
     );
+```
+
+```sql
+CREATE TABLE Recommendations AS SELECT customer_id , output FROM PROMPT_DATA, 
+LATERAL TABLE( 
+    ML_PREDICT('RECOMMEND' ,'Customer Segment:' || customer_segment || 
+    ' , Trending Brands:' || brands || 
+    ' , Trending Products:' || names || 
+    ' , \n Craft a concise, engaging message recommending one or two relevant products or brands. Tailor the tone to match the customer’s segment and include a compelling call-to-action to drive engagement.')
+    );   
 ```

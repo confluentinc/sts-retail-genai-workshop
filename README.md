@@ -325,7 +325,7 @@ The next step is to get initial shoes and customer data from MongoDB.
 Kafka topics and schemas are always in sync with our Flink cluster. Any topic created in Kafka is visible directly as a table in Flink, and any table created in Flink is visible as a topic in Kafka. Effectively, Flink provides a SQL interface on top of Confluent Cloud.
 
 1. From the Confluent Cloud UI, click on the **Environments** tab on the navigation menu. Choose your environment.
-2. Click on *Flink* from the menu pane
+2. Click on **Flink** from the menu pane
 3. Choose the compute pool created in the previous steps.
 4. Click on **Open SQL workspace** button on the top right.
 5. Create trendy shoes tables within a defined tme period by running the following SQL queries.
@@ -340,6 +340,7 @@ CREATE TABLE top_products_every_minute (
     );
 ```
 
+6. Add a new query by clicking on + icon in the left of previous query to Insert records to the above table by running the following query.
 ```sql
 INSERT  INTO top_products_every_minute 
     WITH ProductStats AS ( 
@@ -388,6 +389,7 @@ CREATE TABLE latest_trends AS
     where row_num<=1;
 ```
 
+7. Segment users based upon upon their purchase history.
 
 ```sql
 CREATE TABLE SEGMENTATION AS 
@@ -407,6 +409,8 @@ CREATE TABLE SEGMENTATION AS
     FROM shoes_orders;
 ```
 
+8. Create final topic which contains all the data which will be used by gemini to recommend the product. 
+
 ```sql
 CREATE TABLE PROMPT_DATA AS 
     select * from `SEGMENTATION` as s , 
@@ -416,6 +420,22 @@ CREATE TABLE PROMPT_DATA AS
 
 ## <a name="step-9"></a>Consume final topic and recommend shoes to customers with google gemini
 
+1. Use confluent CLI to create connection with gemini
+
+```sql
+confluent login
+confluent env use <Environment ID>
+confluent kafka cluster use <Kafka Cluster ID>
+confluent flink connection create googleai-ai-connection \
+--cloud <Cloud Provider> \
+--region <Region> \
+--environment <Environment ID> \
+--type googleai \
+--endpoint https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent \
+--api-key <Gemini API Key>
+```
+
+2. Use the same connection to create a model in flink.
 
 ```sql
 CREATE MODEL RECOMMENDATION 
@@ -429,8 +449,14 @@ WITH (
     );
 ```
 
+3. Use the gemini model to get shoes/brands recommendation based upon the input gathered in the final topic.
+
 ```sql
 SELECT * FROM PROMPT_DATA, 
 LATERAL TABLE( 
-    ML_PREDICT('RECOMMENDATION', 'USER DETAILS:' || 'orders->' || CAST(orders as STRING) || ',' || 'customer_segment' ',' || 'Trends:' || brands || ',' || names || ',' || 'view_count -->' || CAST(collective_view_count as STRING)));
+    ML_PREDICT('RECOMMENDATION', 'USER DETAILS:' || 'orders->' || 
+    CAST(orders as STRING) || ',' || 'customer_segment' ',' || 'Trends:' 
+    || brands || ',' || names || ',' || 'view_count -->' || 
+    CAST(collective_view_count as STRING))
+    );
 ```

@@ -278,3 +278,47 @@ The first connector will send sample shoe orders data to the **shoes_orders** to
 <div align="center">
     <img src="images/message-view-1.png" width=90% height=90%>
 </div>
+
+
+## <a name="step-7"></a>Create MongoDB Source Connector for shoes and customers details
+
+The next step is to produce sample data using the Datagen Source connector. You will create two Datagen Source connectors.
+
+The first connector will send sample shoe orders data to the **shoes_orders** topic, while the second connector will send shoes clickstream data to the **shoes_clickstream** topic.
+
+1. First, navigate to your workshop cluster.
+2. Next, click on the **Connectors** link on the navigation menu.
+3. Click on **Add Connector**
+4. Now search for mongo 
+
+<div align="center" padding=25px>
+    <img src="images/mongo-1.png" width=75% height=75%>
+</div>
+
+5. Enter the following configuration details in the setup wizard. The remaining fields can be left blank or default.
+<div align="center">
+
+| Setting                            | Value                        |
+|------------------------------------|------------------------------|
+| Topic prefix                       | mongo                        |
+| API Key                            | [*from step 5*](#step-5)     |
+| API Secret                         | [*from step 5*](#step-5)     |
+| Connection host                    | < MongoDB Server URL >       |
+| Connection user                    | < MongoDB Username >         |
+| Connection password                | < MongoDB Password >         |
+| Database name                      | < MongoDB Database Name >    |
+| Output kakfa record value format   | AVRO                         |
+| Publish full document only         | true                         |
+| Startup mode                       | copy_existing                |
+| Tasks                              | 1                            |
+| Name                               | MongnDBSourceConnector_Shoes |
+
+**You can use shoes.json , shoes-customer.json and upload those in Atlas MongoDB collection.  If Atlas access is not available then MongoDB Connection details will be provided.             
+</div>
+
+<br>
+
+6. Review your selections and then click **Launch**.
+
+
+> **Note:** It may take a few moments for the connectors to launch. Check the status and when both are ready, the status should show *running*. <br> <div align="center"><img src="images/mongo-2.png" width=75% height=75%></div>

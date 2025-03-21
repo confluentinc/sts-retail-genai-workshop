@@ -13,7 +13,7 @@
 4. [Create Topics and walk through Confluent Cloud Dashboard](#step-4)
 5. [Create an API Key Pair](#step-5)
 6. [Create Datagen Connectors for Shoes orders and clickstream](#step-6)
-7. [Create MongoDB Source Connector for shoes and customers details](#step-7)
+7. [Create Atlas MongoDB Source Connector for shoes and customers details](#step-7)
 8. [Stream Processing with Flink for getting trendy products, customer segements, and combine the records into one topic](#step-8)
 9. [Consume final topic and recommend shoes to customers](#step-9)
 10. [Connect Flink with Gemini](#step-10)
@@ -282,9 +282,7 @@ The first connector will send sample shoe orders data to the **shoes_orders** to
 
 ## <a name="step-7"></a>Create MongoDB Source Connector for shoes and customers details
 
-The next step is to produce sample data using the Datagen Source connector. You will create two Datagen Source connectors.
-
-The first connector will send sample shoe orders data to the **shoes_orders** topic, while the second connector will send shoes clickstream data to the **shoes_clickstream** topic.
+The next step is to get initial shoes and customer data from MongoDB.
 
 1. First, navigate to your workshop cluster.
 2. Next, click on the **Connectors** link on the navigation menu.

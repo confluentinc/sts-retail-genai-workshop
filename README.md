@@ -424,7 +424,9 @@ CREATE TABLE PROMPT_DATA AS
 
 ```sql
 confluent login
+confluent environment list
 confluent env use <Environment ID>
+confluent kafka cluster list
 confluent kafka cluster use <Kafka Cluster ID>
 confluent flink connection create googleai-ai-connection \
 --cloud <Cloud Provider> \
@@ -470,3 +472,5 @@ LATERAL TABLE(
     ' , \n Craft a concise, engaging message recommending one or two relevant products or brands. Tailor the tone to match the customer’s segment and include a compelling call-to-action to drive engagement.')
     );   
 ```
+
+<div align="center"><img src="images/final-message.png" width=75% height=75%></div>

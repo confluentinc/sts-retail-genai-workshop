@@ -13,13 +13,12 @@
 4. [Create Topics and walk through Confluent Cloud Dashboard](#step-4)
 5. [Create an API Key Pair](#step-5)
 6. [Create Datagen Connectors for Shoes orders and clickstream](#step-6)
-7. [Create MongoDB Source Connector for shoes and customers details](#step-7)
+7. [Create Atlas MongoDB Source Connector for shoes and customers details](#step-7)
 8. [Stream Processing with Flink for getting trendy products, customer segements, and combine the records into one topic](#step-8)
-9. [Consume final topic and recommend shoes to customers](#step-9)
-10. [Connect Flink with Gemini](#step-10)
-11. [Elasticsearch Monitoring](#step-11)
-12. [Clean Up Resources](#step-12)
-13. [Confluent Resources and Further Testing](#step-13)
+9. [Consume final topic and recommend shoes to customers with google gemini](#step-9)
+10. [Elasticsearch Monitoring](#step-10)
+11. [Clean Up Resources](#step-11)
+12. [Confluent Resources and Further Testing](#step-12)
 ***
 
 ## **Prerequisites**
@@ -278,3 +277,298 @@ The first connector will send sample shoe orders data to the **shoes_orders** to
 <div align="center">
     <img src="images/message-view-1.png" width=90% height=90%>
 </div>
+
+
+## <a name="step-7"></a>Create MongoDB Source Connector for shoes and customers details
+
+The next step is to get initial shoes and customer data from MongoDB.
+
+1. First, navigate to your workshop cluster.
+2. Next, click on the **Connectors** link on the navigation menu.
+3. Click on **Add Connector**
+4. Now search for mongo 
+
+<div align="center" padding=25px>
+    <img src="images/mongo-1.png" width=75% height=75%>
+</div>
+
+5. Enter the following configuration details in the setup wizard. The remaining fields can be left blank or default.
+<div align="center">
+
+| Setting                            | Value                        |
+|------------------------------------|------------------------------|
+| Topic prefix                       | mongo                        |
+| API Key                            | [*from step 5*](#step-5)     |
+| API Secret                         | [*from step 5*](#step-5)     |
+| Connection host                    | < MongoDB Server URL >       |
+| Connection user                    | < MongoDB Username >         |
+| Connection password                | < MongoDB Password >         |
+| Database name                      | < MongoDB Database Name >    |
+| Output kakfa record value format   | AVRO                         |
+| Publish full document only         | true                         |
+| Startup mode                       | copy_existing                |
+| Tasks                              | 1                            |
+| Name                               | MongnDBSourceConnector_Shoes |
+
+**You can use [`shoes.json`](shoes.json) , [`shoe_customers.json`](shoe_customers.json) and upload those in Atlas MongoDB collection.  If Atlas access is not available then MongoDB Connection details will be provided.             
+</div>
+
+<br>
+
+6. Review your selections and then click **Launch**.
+
+
+> **Note:** It may take a few moments for the connectors to launch. Check the status and when both are ready, the status should show *running*. <br> <div align="center"><img src="images/mongo-2.png" width=75% height=75%></div>
+
+## <a name="step-8"></a>Stream Processing with Flink for getting trendy products, customer segements, and combine the records into one topic
+
+Kafka topics and schemas are always in sync with our Flink cluster. Any topic created in Kafka is visible directly as a table in Flink, and any table created in Flink is visible as a topic in Kafka. Effectively, Flink provides a SQL interface on top of Confluent Cloud.
+
+1. From the Confluent Cloud UI, click on the **Environments** tab on the navigation menu. Choose your environment.
+2. Click on **Flink** from the menu pane
+3. Choose the compute pool created in the previous steps.
+4. Click on **Open SQL workspace** button on the top right.
+5. Create trendy shoes tables within a defined tme period by running the following SQL queries.
+
+```sql
+CREATE TABLE top_products_every_minute ( 
+    product_id STRING, 
+    view_count BIGINT, 
+    avg_view_time DOUBLE, 
+    window_start TIMESTAMP_LTZ(3), 
+    window_end TIMESTAMP_LTZ(3) 
+    );
+```
+
+6. Add a new query by clicking on + icon in the left of previous query to Insert records to the above table by running the following query.
+```sql
+INSERT  INTO top_products_every_minute 
+    WITH ProductStats AS ( 
+        SELECT product_id, 
+        COUNT(*) AS view_count, 
+        AVG(view_time) AS avg_view_time, 
+        window_start, window_end FROM TABLE( 
+        TUMBLE(TABLE shoes_clickstream, DESCRIPTOR(`$rowtime`), INTERVAL '1' MINUTE) 
+        ) 
+        GROUP BY product_id, window_start, window_end ), 
+
+    RankedProducts AS ( 
+        SELECT product_id, view_count, avg_view_time, 
+        window_start, window_end, ROW_NUMBER() OVER ( 
+        PARTITION BY window_start, window_end ORDER BY view_count DESC, avg_view_time DESC ) AS ranking 
+        FROM ProductStats ) 
+
+    SELECT product_id, view_count, avg_view_time, 
+    window_start, window_end FROM RankedProducts 
+    WHERE ranking <= 5;
+```
+
+```sql
+CREATE TABLE results_aggregated_every_minute_without_window AS 
+    SELECT  LISTAGG(`brand`,'\n') OVER( 
+        PARTITION BY window_start,window_end  
+        ORDER BY `$rowtime` RANGE BETWEEN INTERVAL '1' MINUTE PRECEDING AND CURRENT ROW ) AS `brands`, 
+        LISTAGG(name,'\n') OVER( 
+        PARTITION BY window_start,window_end 
+        ORDER BY `$rowtime` RANGE BETWEEN INTERVAL '1' MINUTE PRECEDING AND CURRENT ROW ) AS `names`, 
+        SUM(view_count) OVER( 
+        PARTITION BY window_start,window_end 
+        ORDER BY `$rowtime` RANGE BETWEEN INTERVAL '1' MINUTE PRECEDING AND CURRENT ROW ) AS `collective_view_count` 
+    FROM top_products_joined_minute;
+```
+
+```sql
+CREATE TABLE latest_trends AS 
+    SELECT `brands`,`names`, 
+    `collective_view_count`, `row_num`,
+    window_start,window_end FROM ( 
+        SELECT *, ROW_NUMBER() OVER (
+        PARTITION BY window_start, window_end ORDER BY $rowtime DESC) AS row_num 
+        FROM TABLE(
+        TUMBLE(TABLE `results_aggregated_every_minute_without_window`, DESCRIPTOR($rowtime), INTERVAL '1' MINUTE)) ) 
+    where row_num<=1;
+```
+
+7. Segment users based upon upon their purchase history.
+
+```sql
+CREATE TABLE SEGMENTATION AS 
+    SELECT customer_id, `$rowtime` as event_rtime, COUNT(order_id) OVER ( 
+    PARTITION BY customer_id ORDER BY `$rowtime` 
+    RANGE BETWEEN INTERVAL '5' MINUTE PRECEDING AND CURRENT ROW ) AS orders, 
+    CASE 
+        WHEN COUNT(order_id) OVER ( 
+            PARTITION BY customer_id ORDER BY `$rowtime` 
+            RANGE BETWEEN INTERVAL '5' MINUTE PRECEDING AND CURRENT ROW ) > 3 
+        THEN 'Frequent Shopper' 
+        WHEN COUNT(order_id) OVER ( 
+            PARTITION BY customer_id ORDER BY `$rowtime` 
+            RANGE BETWEEN INTERVAL '5' MINUTE PRECEDING AND CURRENT ROW ) BETWEEN 2 AND 3 
+        THEN 'Emerging Shopper' 
+        ELSE 'Occasional Buyer' END AS customer_segment 
+    FROM shoes_orders;
+```
+
+8. Create final topic which contains all the data which will be used by gemini to recommend the product. 
+
+```sql
+CREATE TABLE PROMPT_DATA AS 
+    select * from `SEGMENTATION` as s , 
+    latest_trends as lt 
+    where s.event_rtime BETWEEN lt.window_start AND lt.window_end;
+```
+
+## <a name="step-9"></a>Consume final topic and recommend shoes to customers with google gemini
+
+1. Use confluent CLI to create connection with gemini
+
+```sql
+confluent login
+confluent environment list
+confluent env use <Environment ID>
+confluent kafka cluster list
+confluent kafka cluster use <Kafka Cluster ID>
+confluent flink connection create googleai-ai-connection \
+--cloud <Cloud Provider> \
+--region <Region> \
+--environment <Environment ID> \
+--type googleai \
+--endpoint https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent \
+--api-key <Gemini API Key>
+```
+
+2. Use the same connection to create a model in flink.
+
+```sql
+CREATE MODEL RECOMMEND
+INPUT (`text` VARCHAR(2147483647)) 
+OUTPUT (`output` VARCHAR(2147483647)) 
+WITH ( 
+    'googleai.connection' = 'googleai-ai-connection', 
+    'googleai.system_prompt' = 'Generate a personalized product recommendation message', 
+    'provider' = 'googleai', 
+    'task' = 'text_generation' 
+    );
+```
+
+3. Use the gemini model to get shoes/brands recommendation based upon the input gathered in the final topic.
+
+```sql
+SELECT * FROM PROMPT_DATA, 
+LATERAL TABLE( 
+    ML_PREDICT('RECOMMEND' ,'Customer Segment:' || customer_segment || 
+    ' , Trending Brands:' || brands || 
+    ' , Trending Products:' || names || 
+    ' , \n Craft a concise, engaging message recommending one or two relevant products or brands. Tailor the tone to match the customer’s segment and include a compelling call-to-action to drive engagement.')
+    );
+```
+
+```sql
+CREATE TABLE Recommendations AS SELECT customer_id , output FROM PROMPT_DATA, 
+LATERAL TABLE( 
+    ML_PREDICT('RECOMMEND' ,'Customer Segment:' || customer_segment || 
+    ' , Trending Brands:' || brands || 
+    ' , Trending Products:' || names || 
+    ' , \n Craft a concise, engaging message recommending one or two relevant products or brands. Tailor the tone to match the customer’s segment and include a compelling call-to-action to drive engagement.')
+    );   
+```
+
+<div align="center"><img src="images/final-message.png" width=75% height=75%></div>
+
+## <a name="step-10"></a>Elasticsearch Monitoring
+
+The next step is to sink topics to elasticsearch for analytics and monitoring.
+
+1. First, navigate to your workshop cluster.
+2. Next, click on the **Connectors** link on the navigation menu.
+3. Click on **Add Connector**
+4. Now search for elastic 
+
+<div align="center" padding=25px>
+    <img src="images/elasticsearch-connector.png" width=75% height=75%>
+</div>
+
+5. Enter the following configuration details in the setup wizard. The remaining fields can be left blank or default.
+<div align="center">
+
+| Setting                            | Value                                    |
+|------------------------------------|------------------------------------------|
+| Topic names                        | SEGMENTATION , top_products_every_minute |
+| API Key                            | [*from step 5*](#step-5)                 |
+| API Secret                         | [*from step 5*](#step-5)                 |
+| Connection URI                     | < Elasticsearch Server URL >             |
+| Connection user                    | < Elasticsearch Username >               |
+| Connection password                | < Elasticsearch Password >               |
+| Input kakfa record value format    | AVRO                                     |
+| Key ignore                         | true                                     |
+| Tasks                              | 1                                        |
+| Name                               | ElasticsearchSinkConnector_monitoring    |
+> **Note:** It may take a few moments for the connectors to launch. Check the status and when both are ready, the status should show *running*. <br>      
+</div>
+
+<br>
+
+
+
+6. Review your selections and then click **Launch**.
+
+7. Next step is to create Elasticsearch data-views and kibana-dashboard. You can use [`elasticsearch.ndjson`](elasticsearch.ndjson) to import the dashbaord.
+
+8. Now Visit Elasticsearch UI and select Stack Management page under Management from the hamburger menu.
+<div align="center" padding=25px><img src="images/elasticsearch-1.png" width=75% height=75%></div>
+
+9. Proceed to Saved Objects page under kibana section
+<div align="center" padding=25px><img src="images/elasticsearch-2.png" width=75% height=75%></div>
+
+10. Import dashboard template from [`elasticsearch.ndjson`](elasticsearch.ndjson) file.
+
+<div align="center" padding=25px><img src="images/elasticsearch-3.png" width=75% height=75%></div>
+<br>
+<div align="center" padding=25px><img src="images/elasticsearch-4.png" width=75% height=75%></div>
+<br>
+<div align="center" padding=25px><img src="images/elasticsearch-5.png" width=75% height=75%></div>
+
+11. Once dashboard imported successfully , visit Dashboards page under Analytics section.
+
+<div align="center" padding=25px><img src="images/elasticsearch-6.png" width=75% height=75%></div>
+<br>
+<div align="center" padding=25px><img src="images/elasticsearch-7.png" width=90% height=90%></div>
+
+## <a name="step-11"></a>Clean Up Resources
+
+Deleting the resources you created during this workshop will prevent you from incurring additional charges. 
+
+1. The first item to delete is the Apache Flink Compute Pool. Select the **Delete** button under **Actions** and enter the **Application Name** to confirm the deletion. 
+<div align="center">
+    <img src="images/flink-delete-compute-pool.png" width=75% height=75%>
+</div>
+
+2. Next, delete all the connectors, Navigate to the **Connectors** tab and select each connector. In the settings tab, you will see a **trash** icon on the bottom of the page. Click the icon and enter the **Connector Name**.
+<div align="center">
+    <img src="images/delete-connector.png" width=75% height=75%>
+</div>
+
+3. Next, under **Cluster Settings**, select the **Delete Cluster** button at the bottom. Enter the **Cluster Name** and select **Confirm**. 
+<div align="center">
+    <img src="images/delete-cluster.png" width=75% height=75%>
+</div>
+
+4. Finally, to remove all resource pertaining to this workshop, delete the environment.
+<div align="center">
+    <img src="images/delete-environment.png" width=75% height=75%>
+</div>
+*** 
+
+## <a name="step-12"></a>Confluent Resources and Further Testing
+
+Here are some links to check out if you are interested in further testing:
+- [Confluent Cloud Documentation](https://docs.confluent.io/cloud/current/overview.html)
+- [MongoDB Source Connector](https://docs.confluent.io/cloud/current/connectors/cc-mongo-db-source.html)
+- [Apache Flink 101](https://developer.confluent.io/courses/apache-flink/intro/)
+- [Stream Processing with Confluent Cloud for Apache Flink](https://docs.confluent.io/cloud/current/flink/index.html)
+- [Flink SQL Reference](https://docs.confluent.io/cloud/current/flink/reference/overview.html)
+- [Flink SQL Functions](https://docs.confluent.io/cloud/current/flink/reference/functions/overview.html)
+- [Flink GenAI](https://www.confluent.io/blog/flinkai-realtime-ml-and-genai-confluent-cloud/)
+- [Elasticsearch Sink Connector](https://docs.confluent.io/cloud/current/connectors/cc-elasticsearch-service-sink.html)
+
+***

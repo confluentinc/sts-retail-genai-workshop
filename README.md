@@ -503,11 +503,11 @@ The next step is to sink topics to elasticsearch for analytics and monitoring.
 | Key ignore                         | true                                     |
 | Tasks                              | 1                                        |
 | Name                               | ElasticsearchSinkConnector_monitoring    |
-      
+> **Note:** It may take a few moments for the connectors to launch. Check the status and when both are ready, the status should show *running*. <br>      
 </div>
 
 <br>
-> **Note:** It may take a few moments for the connectors to launch. Check the status and when both are ready, the status should show *running*. <br>
+
 
 
 6. Review your selections and then click **Launch**.
@@ -523,11 +523,14 @@ The next step is to sink topics to elasticsearch for analytics and monitoring.
 10. Import dashboard template from [`elasticsearch.ndjson`](elasticsearch.ndjson) file.
 
 <div align="center" padding=25px><img src="images/elasticsearch-3.png" width=75% height=75%></div>
+<br>
 <div align="center" padding=25px><img src="images/elasticsearch-4.png" width=75% height=75%></div>
+<br>
 <div align="center" padding=25px><img src="images/elasticsearch-5.png" width=75% height=75%></div>
 
 11. Once dashboard imported successfully , visit Dashboards page under Analytics section.
 
 <div align="center" padding=25px><img src="images/elasticsearch-6.png" width=75% height=75%></div>
-<div align="center" padding=25px><img src="images/elasticsearch-7.png" width=75% height=75%></div>
+<br>
+<div align="center" padding=25px><img src="images/elasticsearch-7.png" width=90% height=90%></div>
 

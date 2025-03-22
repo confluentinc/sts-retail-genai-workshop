@@ -534,3 +534,41 @@ The next step is to sink topics to elasticsearch for analytics and monitoring.
 <br>
 <div align="center" padding=25px><img src="images/elasticsearch-7.png" width=90% height=90%></div>
 
+## <a name="step-11"></a>Clean Up Resources
+
+Deleting the resources you created during this workshop will prevent you from incurring additional charges. 
+
+1. The first item to delete is the Apache Flink Compute Pool. Select the **Delete** button under **Actions** and enter the **Application Name** to confirm the deletion. 
+<div align="center">
+    <img src="images/flink-delete-compute-pool.png" width=50% height=50%>
+</div>
+
+2. Next, delete all the connectors, Navigate to the **Connectors** tab and select each connector. In the settings tab, you will see a **trash** icon on the bottom of the page. Click the icon and enter the **Connector Name**.
+<div align="center">
+    <img src="images/delete-connector.png" width=75% height=75%>
+</div>
+
+3. Next, under **Cluster Settings**, select the **Delete Cluster** button at the bottom. Enter the **Cluster Name** and select **Confirm**. 
+<div align="center">
+    <img src="images/delete-cluster.png" width=50% height=50%>
+</div>
+
+4. Finally, to remove all resource pertaining to this workshop, delete the environment.
+<div align="center">
+    <img src="images/delete-environment.png" width=50% height=50%>
+</div>
+*** 
+
+## <a name="step-12"></a>Confluent Resources and Further Testing
+
+Here are some links to check out if you are interested in further testing:
+- [Confluent Cloud Documentation](https://docs.confluent.io/cloud/current/overview.html)
+- [MongoDB Source Connector](https://docs.confluent.io/cloud/current/connectors/cc-mongo-db-source.html)
+- [Apache Flink 101](https://developer.confluent.io/courses/apache-flink/intro/)
+- [Stream Processing with Confluent Cloud for Apache Flink](https://docs.confluent.io/cloud/current/flink/index.html)
+- [Flink SQL Reference](https://docs.confluent.io/cloud/current/flink/reference/overview.html)
+- [Flink SQL Functions](https://docs.confluent.io/cloud/current/flink/reference/functions/overview.html)
+- [Flink GenAI](https://www.confluent.io/blog/flinkai-realtime-ml-and-genai-confluent-cloud/)
+- [Elasticsearch Sink Connector](https://docs.confluent.io/cloud/current/connectors/cc-elasticsearch-service-sink.html)
+
+***

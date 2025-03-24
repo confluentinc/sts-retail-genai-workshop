@@ -97,7 +97,7 @@ An environment contains clusters and its deployed components such as Apache Flin
 </div>
 
 4. Click **Begin Configuration**. 
-5. Choose your preferred Cloud Provider (AWS, GCP, or Azure), region, and availability zone. 
+5. Choose GCP as preferred Cloud Provider, region (us-central1), and availability zone. 
 6. Specify a **Cluster Name**. For the purpose of this lab, any name will work here. 
 
 <div align="center" padding=25px>
@@ -246,9 +246,9 @@ The first connector will send sample shoe orders data to the **shoes_orders** to
 
 | Setting                            | Value                        |
 |------------------------------------|------------------------------|
+| Topic                              | shoes_clickstream
 | API Key                            | [*from step 5* ](#step-5)    |
 | API Secret                         | [*from step 5* ](#step-5)    |
-| Topic                              | shoes_clickstream            |
 | Output message format              | AVRO                         |
 | Quickstart                         | Shoe clickstream             |
 | Max interval between messages (ms) | 1000                         |
@@ -308,7 +308,7 @@ The next step is to get initial shoes and customer data from MongoDB.
 | Publish full document only         | true                         |
 | Startup mode                       | copy_existing                |
 | Tasks                              | 1                            |
-| Name                               | MongnDBSourceConnector_Shoes |
+| Name                               | MongoDBSourceConnector_Shoes |
 
 **You can use [`shoes.json`](shoes.json) , [`shoe_customers.json`](shoe_customers.json) and upload those in Atlas MongoDB collection.  If Atlas access is not available then MongoDB Connection details will be provided.             
 </div>
@@ -328,7 +328,9 @@ Kafka topics and schemas are always in sync with our Flink cluster. Any topic cr
 2. Click on **Flink** from the menu pane
 3. Choose the compute pool created in the previous steps.
 4. Click on **Open SQL workspace** button on the top right.
-5. Create trendy shoes tables within a defined tme period by running the following SQL queries.
+5. Let's execute the following SQL queries to create the `latest_trends` table, which aggregates the top products and brands within a defined time period, updating every minute.
+
+Let's begin by identifying the top products every minute.
 
 ```sql
 CREATE TABLE top_products_every_minute ( 
@@ -340,7 +342,20 @@ CREATE TABLE top_products_every_minute (
     );
 ```
 
+**How can we identify the most popular products over a defined time window?**
+
+Before running below query, we should first explore the raw shoes_clickstream data to understand user interactions. This involves:
+
+- Counting product views per minute to analyze engagement trends.
+
+- Calculating the average time spent on each product to measure interest levels.
+
+- Grouping and ranking them into 1-minute windows to track real-time trends.
+
+Once we understand these metrics, we can proceed with ranking the top 5 products every minute. Let's try now running the below query.
+
 6. Add a new query by clicking on + icon in the left of previous query to Insert records to the above table by running the following query.
+
 ```sql
 INSERT  INTO top_products_every_minute 
     WITH ProductStats AS ( 
@@ -363,36 +378,61 @@ INSERT  INTO top_products_every_minute
     WHERE ranking <= 5;
 ```
 
+Next, we will enhance `top_products_every_minute` by adding brand and shoe details. This involves joining with the `shoes` table to retrieve brand and shoe names for the top products. The resulting `top_shoes_with_details` table will offer a comprehensive view of trending products and brands every minute.  
+
+Insert the correct column name for `<PRODUCT_ID_COLUMN>` from `top_products_every_minute`.
+
 ```sql
-CREATE TABLE results_aggregated_every_minute_without_window AS 
-    SELECT  LISTAGG(`brand`,'\n') OVER( 
-        PARTITION BY window_start,window_end  
-        ORDER BY `$rowtime` RANGE BETWEEN INTERVAL '1' MINUTE PRECEDING AND CURRENT ROW ) AS `brands`, 
-        LISTAGG(name,'\n') OVER( 
-        PARTITION BY window_start,window_end 
-        ORDER BY `$rowtime` RANGE BETWEEN INTERVAL '1' MINUTE PRECEDING AND CURRENT ROW ) AS `names`, 
-        SUM(view_count) OVER( 
-        PARTITION BY window_start,window_end 
-        ORDER BY `$rowtime` RANGE BETWEEN INTERVAL '1' MINUTE PRECEDING AND CURRENT ROW ) AS `collective_view_count` 
-    FROM top_products_joined_minute;
+CREATE TABLE top_shoes_with_details (
+    `timestamp` TIMESTAMP(3),
+    WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '5' SECOND
+) AS 
+select *, now () as `timestamp` from top_products_every_minute as tp , 
+`mongo.demo.shoes` as ms 
+where ms.id=tp.<PRODUCT_ID_COLUMN>;
 ```
+
+Let's aggregate all the trending brands and shoes over a time window. Insert the correct column name for `<BRAND_COLUMN>` from `top_shoes_with_details` and run the query. 
+
+```sql
+CREATE TABLE results_aggregated (
+    `timestamp` TIMESTAMP(3),
+    WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '5' SECOND
+)  AS
+SELECT LISTAGG(`<BRAND_COLUMN>`,'\n') OVER w AS `trending_brands`,
+        LISTAGG(name,'\n') OVER w AS `trending_shoes`,
+        SUM(view_count) OVER w AS `collective_view_count`,
+        `timestamp`
+    FROM top_shoes_with_details
+  WINDOW w AS (
+  PARTITION BY window_start,window_end
+  ORDER BY `timestamp`
+  RANGE BETWEEN INTERVAL '1' MINUTE PRECEDING AND CURRENT ROW);
+```
+
+**Now, Let's Remove Duplicates**  
+
+We'll create the `latest_trends` table by **deduplicating aggregated results**, ensuring only the most recent entry per time window is retained.  
+This query assigns a **row number** to each record within the same `window_start` and `window_end`, ordered by `timestamp` (latest first), and keeps only the **latest record** per window. 
 
 ```sql
 CREATE TABLE latest_trends AS 
-    SELECT `brands`,`names`, 
+    SELECT `trending_brands`,`trending_shoes`, 
     `collective_view_count`, `row_num`,
     window_start,window_end FROM ( 
         SELECT *, ROW_NUMBER() OVER (
-        PARTITION BY window_start, window_end ORDER BY $rowtime DESC) AS row_num 
+        PARTITION BY window_start, window_end ORDER BY `timestamp` DESC) AS row_num 
         FROM TABLE(
-        TUMBLE(TABLE `results_aggregated_every_minute_without_window`, DESCRIPTOR($rowtime), INTERVAL '1' MINUTE)) ) 
+        TUMBLE(TABLE `results_aggregated`, DESCRIPTOR(`timestamp`), INTERVAL '1' MINUTE)) ) 
     where row_num<=1;
 ```
 
-7. Segment users based upon upon their purchase history.
+Every customer is unique, and their shopping behavior varies. To provide personalized recommendations, we need to understand their purchasing patterns. So, let's segment our customers based on their recent purchase history, identifying frequent **shoppers**, **emerging buyers**, and **occasional customers**. 
+
+7. Let's segment users based on their purchase frequency in `shoes_orders` to better understand their shopping behavior.Replace the correct table name for `<SHOE_ORDERS_TABLE_NAME>` and run the query. 
 
 ```sql
-CREATE TABLE SEGMENTATION AS 
+CREATE TABLE customer_segments_table AS 
     SELECT customer_id, `$rowtime` as event_rtime, COUNT(order_id) OVER ( 
     PARTITION BY customer_id ORDER BY `$rowtime` 
     RANGE BETWEEN INTERVAL '5' MINUTE PRECEDING AND CURRENT ROW ) AS orders, 
@@ -406,14 +446,14 @@ CREATE TABLE SEGMENTATION AS
             RANGE BETWEEN INTERVAL '5' MINUTE PRECEDING AND CURRENT ROW ) BETWEEN 2 AND 3 
         THEN 'Emerging Shopper' 
         ELSE 'Occasional Buyer' END AS customer_segment 
-    FROM shoes_orders;
+    FROM <SHOE_ORDERS_TABLE_NAME>;
 ```
 
-8. Create final topic which contains all the data which will be used by gemini to recommend the product. 
+8. Create the final topic containing all the data needed for Gemini to generate product recommendations. Replace `<SEGMENTED_TABLE_NAME>` with the correct table name from the previous segmentation query and execute the query.
 
 ```sql
-CREATE TABLE PROMPT_DATA AS 
-    select * from `SEGMENTATION` as s , 
+CREATE TABLE personalized_recommendation_input AS 
+    select * from `<SEGMENTED_TABLE_NAME>` as s , 
     latest_trends as lt 
     where s.event_rtime BETWEEN lt.window_start AND lt.window_end;
 ```
@@ -454,21 +494,21 @@ WITH (
 3. Use the gemini model to get shoes/brands recommendation based upon the input gathered in the final topic.
 
 ```sql
-SELECT * FROM PROMPT_DATA, 
+SELECT * FROM personalized_recommendation_input, 
 LATERAL TABLE( 
     ML_PREDICT('RECOMMEND' ,'Customer Segment:' || customer_segment || 
-    ' , Trending Brands:' || brands || 
-    ' , Trending Products:' || names || 
+    ' , Trending Brands:' || trending_brands || 
+    ' , Trending Products:' || trending_shoes || 
     ' , \n Craft a concise, engaging message recommending one or two relevant products or brands. Tailor the tone to match the customer’s segment and include a compelling call-to-action to drive engagement.')
     );
 ```
 
 ```sql
-CREATE TABLE Recommendations AS SELECT customer_id , output FROM PROMPT_DATA, 
+CREATE TABLE Recommendations AS SELECT customer_id , output FROM personalized_recommendation_input, 
 LATERAL TABLE( 
     ML_PREDICT('RECOMMEND' ,'Customer Segment:' || customer_segment || 
-    ' , Trending Brands:' || brands || 
-    ' , Trending Products:' || names || 
+    ' , Trending Brands:' || trending_brands || 
+    ' , Trending Products:' || trending_shoes || 
     ' , \n Craft a concise, engaging message recommending one or two relevant products or brands. Tailor the tone to match the customer’s segment and include a compelling call-to-action to drive engagement.')
     );   
 ```
@@ -572,3 +612,5 @@ Here are some links to check out if you are interested in further testing:
 - [Elasticsearch Sink Connector](https://docs.confluent.io/cloud/current/connectors/cc-elasticsearch-service-sink.html)
 
 ***
+
+

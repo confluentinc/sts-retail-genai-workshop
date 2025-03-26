@@ -56,7 +56,7 @@ Welcome to “Build Real Time Recommendation Pipeline for E-Commerce website”!
 By the end of this workshop, you'll have a clear understanding of how to utilize Confluent Cloud’s features to build a foundation for machine learning recommendation applications, empowering you to transform your streaming data into valuable product suggestions and gain insights.
 
 <div align="center" padding=25px>
-    <img src="images/arc.png" width=75% height=75%>
+    <img src="images/arc.png" width=90% height=90%>
 </div>
 
 ***
@@ -518,6 +518,8 @@ LATERAL TABLE(
 ## <a name="step-10"></a>Elasticsearch Monitoring
 
 The next step is to sink topics to elasticsearch for analytics and monitoring.
+
+You can either use Elasticsearch Cloud services or self manage the elasticsearch with docker. Refer [`elk`](elk) for steps.
 
 1. First, navigate to your workshop cluster.
 2. Next, click on the **Connectors** link on the navigation menu.

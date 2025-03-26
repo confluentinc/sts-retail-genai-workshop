@@ -531,18 +531,18 @@ The next step is to sink topics to elasticsearch for analytics and monitoring.
 5. Enter the following configuration details in the setup wizard. The remaining fields can be left blank or default.
 <div align="center">
 
-| Setting                            | Value                                    |
-|------------------------------------|------------------------------------------|
-| Topic names                        | SEGMENTATION , top_products_every_minute |
-| API Key                            | [*from step 5*](#step-5)                 |
-| API Secret                         | [*from step 5*](#step-5)                 |
-| Connection URI                     | < Elasticsearch Server URL >             |
-| Connection user                    | < Elasticsearch Username >               |
-| Connection password                | < Elasticsearch Password >               |
-| Input kakfa record value format    | AVRO                                     |
-| Key ignore                         | true                                     |
-| Tasks                              | 1                                        |
-| Name                               | ElasticsearchSinkConnector_monitoring    |
+| Setting                            | Value                                               |
+|------------------------------------|-----------------------------------------------------|
+| Topic names                        | customer_segments_table , top_products_every_minute |
+| API Key                            | [*from step 5*](#step-5)                            |
+| API Secret                         | [*from step 5*](#step-5)                            |
+| Connection URI                     | < Elasticsearch Server URL >                        |
+| Connection user                    | < Elasticsearch Username >                          |
+| Connection password                | < Elasticsearch Password >                          |
+| Input kakfa record value format    | AVRO                                                |
+| Key ignore                         | true                                                |
+| Tasks                              | 1                                                   |
+| Name                               | ElasticsearchSinkConnector_monitoring               |
 > **Note:** It may take a few moments for the connectors to launch. Check the status and when both are ready, the status should show *running*. <br>      
 </div>
 

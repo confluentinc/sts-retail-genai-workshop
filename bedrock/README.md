@@ -1,5 +1,5 @@
 <div align="center" padding=25px>
-    <img src="images/confluent.png" width=50% height=50%>
+    <img src="../common/images/confluent.png" width=50% height=50%>
 </div>
 
 # <div align="center">Build Real Time Recommendation Pipeline for E-Commerce website</div>
@@ -42,7 +42,7 @@
 > **Note:** You will create resources during this workshop that will incur costs. When you sign up for a Confluent Cloud account, you will get free credits to use in Confluent Cloud. This will cover the cost of resources created during the workshop. More details on the specifics can be found [here](https://www.confluent.io/confluent-cloud/tryfree/).
 
 <div align="center" padding=25px>
-    <img src="images/billing.png" width=75% height=75%>
+    <img src="../common/images/billing.png" width=75% height=75%>
 </div>
 
 ***
@@ -56,7 +56,7 @@ Welcome to “Build Real Time Recommendation Pipeline for E-Commerce website”!
 By the end of this workshop, you'll have a clear understanding of how to utilize Confluent Cloud’s features to build a foundation for machine learning recommendation applications, empowering you to transform your streaming data into valuable product suggestions and gain insights.
 
 <div align="center" padding=25px>
-    <img src="images/arc.png" width=90% height=90%>
+    <img src="../common/images/arc.png" width=90% height=90%>
 </div>
 
 ***
@@ -67,7 +67,7 @@ By the end of this workshop, you'll have a clear understanding of how to utilize
 1. Log into [Confluent Cloud](https://confluent.cloud) and enter your email and password.
 
 <div align="center" padding=25px>
-    <img src="images/login.png" width=50% height=50%>
+    <img src="../common/images/login.png" width=50% height=50%>
 </div>
 
 2. If you are logging in for the first time, you will see a self-guided wizard that walks you through spinning up a cluster. Please minimize this as you will walk through those steps in this workshop. 
@@ -83,7 +83,7 @@ An environment contains clusters and its deployed components such as Apache Flin
 >**Note:** There is a *default* environment ready in your account upon account creation. You can use this *default* environment for the purpose of this workshop if you do not wish to create an additional environment.
 
 <div align="center" padding=25px>
-    <img src="images/environment.png" width=50% height=50%>
+    <img src="../common/images/environment.png" width=50% height=50%>
 </div>
 
 2. Now that you have an environment, click **Create Cluster**. 
@@ -93,7 +93,7 @@ An environment contains clusters and its deployed components such as Apache Flin
 3. Chose the **Basic** cluster type. 
 
 <div align="center" padding=25px>
-    <img src="images/cluster-type.png" width=90% height=90%>
+    <img src="../common/images/cluster-type.png" width=90% height=90%>
 </div>
 
 4. Click **Begin Configuration**. 
@@ -101,7 +101,7 @@ An environment contains clusters and its deployed components such as Apache Flin
 6. Specify a **Cluster Name**. For the purpose of this lab, any name will work here. 
 
 <div align="center" padding=25px>
-    <img src="images/create-cluster.png" width=70% height=70%>
+    <img src="../common/images/create-cluster.png" width=70% height=70%>
 </div>
 
 7. View the associated *Configuration & Cost*, *Usage Limits*, and *Uptime SLA* information before launching. 
@@ -114,18 +114,18 @@ An environment contains clusters and its deployed components such as Apache Flin
 1. On the navigation menu, select **Flink** and click **Create Compute Pool**.
 
 <div align="center" padding=25px>
-    <img src="images/create-flink-pool-1.png" width=60% height=60%>
+    <img src="../common/images/create-flink-pool-1.png" width=60% height=60%>
 </div>
 
 2. Select **Region** and then **Continue**. (You have to use the region where the cluster was created in the previous step)
 <div align="center" padding=25px>
-    <img src="images/create-flink-pool-2.png" width=60% height=60%>
+    <img src="../common/images/create-flink-pool-2.png" width=60% height=60%>
 </div>
 
 3. Name you Pool Name and set the capacity units (CFUs) to **10**. Click **Finish**.
 
 <div align="center" padding=25px>
-    <img src="images/create-flink-pool-3.png" width=60% height=60%>
+    <img src="../common/images/create-flink-pool-3.png" width=60% height=60%>
 </div>
 
 > **Note:** The capacity of a compute pool is measured in CFUs. Compute pools expand and shrink automatically based on the resources required by the statements using them. A compute pool without any running statements scale down to zero. The maximum size of a compute pool is configured during creation. 
@@ -135,19 +135,19 @@ An environment contains clusters and its deployed components such as Apache Flin
 5. Change your workspace name by clicking **settings button**. Click **Save changes** after you update the workspace name.
 
 <div align="center" padding=25px>
-    <img src="images/flink-workspace-1.png" width=90% height=90%>
+    <img src="../common/images/flink-workspace-1.png" width=90% height=90%>
 </div>
 
 6. Set the Catalog as your environment name.
 
 <div align="center" padding=25px>
-    <img src="images/flink-workspace-2.png" width=60% height=60%>
+    <img src="../common/images/flink-workspace-2.png" width=60% height=60%>
 </div>
 
 7. Set the Database as your cluster name.
 
 <div align="center" padding=25px>
-    <img src="images/flink-workspace-3.png" width=60% height=60%>
+    <img src="../common/images/flink-workspace-3.png" width=60% height=60%>
 </div>
 
 ***
@@ -163,7 +163,7 @@ An environment contains clusters and its deployed components such as Apache Flin
 4. Enter **shoes_orders** as the topic name, **3** as the number of partitions, skip the data contract and then click **Create with defaults**.'
 
 <div align="center" padding=25px>
-    <img src="images/create-topic.png" width=50% height=50%>
+    <img src="../common/images/create-topic.png" width=50% height=50%>
 </div>
 
 5. Repeat the previous step and create a second topic name **shoes_clickstream** and **3** as the number of partitions and skip the data contract.
@@ -181,14 +181,14 @@ An environment contains clusters and its deployed components such as Apache Flin
 3. Click **Create Key** in order to create your first API Key. If you have an existing API Key, click **+ Add Key** to create another API Key.
 
 <div align="center" padding=25px>
-    <img src="images/create-apikey-updated.png" width=75% height=75%>
+    <img src="../common/images/create-apikey-updated.png" width=75% height=75%>
 </div>
 
 4. Select **My account** and then click **Next**.
 5. Enter a description for your API Key (e.g. `API Key to source data from connectors`).
 
 <div align="center" padding=25px>
-    <img src="images/create-apikey-download.png" width=75% height=75%>
+    <img src="../common/images/create-apikey-download.png" width=75% height=75%>
 </div>
 
 6. After creating and saving the API key, you will see this API key in the Confluent Cloud UI in the *API Keys* table. If you don't see the API key populate right away, try refreshing your browser.
@@ -205,7 +205,7 @@ The first connector will send sample shoe orders data to the **shoes_orders** to
 3. Now click on the **Datagen Source** icon.
 
 <div align="center" padding=25px>
-    <img src="images/connectors.png" width=75% height=75%>
+    <img src="../common/images/connectors.png" width=75% height=75%>
 </div>
 
 4. Click the **Additional Configuration** link.
@@ -228,11 +228,11 @@ The first connector will send sample shoe orders data to the **shoes_orders** to
 <br>
 
 <div align="center" padding=25px>
-    <img src="images/datagen-config-1.png" width=75% height=75%>
+    <img src="../common/images/datagen-config-1.png" width=75% height=75%>
 </div>
 
 <div align="center" padding=25px>
-    <img src="images/datagen-config-2.png" width=75% height=75%>
+    <img src="../common/images/datagen-config-2.png" width=75% height=75%>
 </div>
 
 6. Continue through the setup wizard and click **Continue** to launch the wizard.
@@ -261,7 +261,7 @@ The first connector will send sample shoe orders data to the **shoes_orders** to
 9. Review your selections and then click **Launch**.
 
 
-> **Note:** It may take a few moments for the connectors to launch. Check the status and when both are ready, the status should show *running*. <br> <div align="center"><img src="images/running-connectors.png" width=75% height=75%></div>
+> **Note:** It may take a few moments for the connectors to launch. Check the status and when both are ready, the status should show *running*. <br> <div align="center"><img src="../common/images/running-connectors.png" width=75% height=75%></div>
 
 > **Note:** If the connector fails, there are a few different ways to troubleshoot the error:
 > * Click on the *Connector Name*. You will see a play and pause button on this page. Click on the play button.
@@ -275,7 +275,7 @@ The first connector will send sample shoe orders data to the **shoes_orders** to
 12. Click on a row in the table and you should see something like this:
 
 <div align="center">
-    <img src="images/message-view-1.png" width=90% height=90%>
+    <img src="../common/images/message-view-1.png" width=90% height=90%>
 </div>
 
 
@@ -289,7 +289,7 @@ The next step is to get initial shoes and customer data from MongoDB.
 4. Now search for mongo 
 
 <div align="center" padding=25px>
-    <img src="images/mongo-1.png" width=75% height=75%>
+    <img src="../common/images/mongo-1.png" width=75% height=75%>
 </div>
 
 5. Enter the following configuration details in the setup wizard. The remaining fields can be left blank or default.
@@ -318,7 +318,7 @@ The next step is to get initial shoes and customer data from MongoDB.
 6. Review your selections and then click **Launch**.
 
 
-> **Note:** It may take a few moments for the connectors to launch. Check the status and when both are ready, the status should show *running*. <br> <div align="center"><img src="images/mongo-2.png" width=75% height=75%></div>
+> **Note:** It may take a few moments for the connectors to launch. Check the status and when both are ready, the status should show *running*. <br> <div align="center"><img src="../common/images/mongo-2.png" width=75% height=75%></div>
 
 ## <a name="step-8"></a>Stream Processing with Flink for getting trendy products, customer segements, and combine the records into one topic
 
@@ -513,7 +513,7 @@ LATERAL TABLE(
     );   
 ```
 
-<div align="center"><img src="images/final-message.png" width=75% height=75%></div>
+<div align="center"><img src="../common/images/final-message.png" width=75% height=75%></div>
 
 ## <a name="step-10"></a>Elasticsearch Monitoring
 
@@ -527,7 +527,7 @@ You can either use Elasticsearch Cloud services or self manage the elasticsearch
 4. Now search for elastic 
 
 <div align="center" padding=25px>
-    <img src="images/elasticsearch-connector.png" width=75% height=75%>
+    <img src="../common/images/elasticsearch-connector.png" width=75% height=75%>
 </div>
 
 5. Enter the following configuration details in the setup wizard. The remaining fields can be left blank or default.
@@ -557,24 +557,24 @@ You can either use Elasticsearch Cloud services or self manage the elasticsearch
 7. Next step is to create Elasticsearch data-views and kibana-dashboard. You can use [`elasticsearch.ndjson`](elasticsearch.ndjson) to import the dashbaord.
 
 8. Now Visit Elasticsearch UI and select Stack Management page under Management from the hamburger menu.
-<div align="center" padding=25px><img src="images/elasticsearch-1.png" width=75% height=75%></div>
+<div align="center" padding=25px><img src="../common/images/elasticsearch-1.png" width=75% height=75%></div>
 
 9. Proceed to Saved Objects page under kibana section
-<div align="center" padding=25px><img src="images/elasticsearch-2.png" width=75% height=75%></div>
+<div align="center" padding=25px><img src="../common/images/elasticsearch-2.png" width=75% height=75%></div>
 
 10. Import dashboard template from [`elasticsearch.ndjson`](elasticsearch.ndjson) file.
 
-<div align="center" padding=25px><img src="images/elasticsearch-3.png" width=75% height=75%></div>
+<div align="center" padding=25px><img src="../common/images/elasticsearch-3.png" width=75% height=75%></div>
 <br>
-<div align="center" padding=25px><img src="images/elasticsearch-4.png" width=75% height=75%></div>
+<div align="center" padding=25px><img src="../common/images/elasticsearch-4.png" width=75% height=75%></div>
 <br>
-<div align="center" padding=25px><img src="images/elasticsearch-5.png" width=75% height=75%></div>
+<div align="center" padding=25px><img src="../common/images/elasticsearch-5.png" width=75% height=75%></div>
 
 11. Once dashboard imported successfully , visit Dashboards page under Analytics section.
 
-<div align="center" padding=25px><img src="images/elasticsearch-6.png" width=75% height=75%></div>
+<div align="center" padding=25px><img src="../common/images/elasticsearch-6.png" width=75% height=75%></div>
 <br>
-<div align="center" padding=25px><img src="images/elasticsearch-7.png" width=90% height=90%></div>
+<div align="center" padding=25px><img src="../common/images/elasticsearch-7.png" width=90% height=90%></div>
 
 ## <a name="step-11"></a>Clean Up Resources
 
@@ -582,22 +582,22 @@ Deleting the resources you created during this workshop will prevent you from in
 
 1. The first item to delete is the Apache Flink Compute Pool. Select the **Delete** button under **Actions** and enter the **Application Name** to confirm the deletion. 
 <div align="center">
-    <img src="images/flink-delete-compute-pool.png" width=75% height=75%>
+    <img src="../common/images/flink-delete-compute-pool.png" width=75% height=75%>
 </div>
 
 2. Next, delete all the connectors, Navigate to the **Connectors** tab and select each connector. In the settings tab, you will see a **trash** icon on the bottom of the page. Click the icon and enter the **Connector Name**.
 <div align="center">
-    <img src="images/delete-connector.png" width=75% height=75%>
+    <img src="../common/images/delete-connector.png" width=75% height=75%>
 </div>
 
 3. Next, under **Cluster Settings**, select the **Delete Cluster** button at the bottom. Enter the **Cluster Name** and select **Confirm**. 
 <div align="center">
-    <img src="images/delete-cluster.png" width=75% height=75%>
+    <img src="../common/images/delete-cluster.png" width=75% height=75%>
 </div>
 
 4. Finally, to remove all resource pertaining to this workshop, delete the environment.
 <div align="center">
-    <img src="images/delete-environment.png" width=75% height=75%>
+    <img src="../common/images/delete-environment.png" width=75% height=75%>
 </div>
 *** 
 

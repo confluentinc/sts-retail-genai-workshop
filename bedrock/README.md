@@ -1,5 +1,5 @@
 <div align="center" padding=25px>
-    <img src="../common/images/confluent.png" width=50% height=50%>
+    <img src="images/confluent.png" width=50% height=50%>
 </div>
 
 # <div align="center">Build Real Time Recommendation Pipeline for E-Commerce website</div>

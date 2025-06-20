@@ -15,7 +15,7 @@
 6. [Create Datagen Connectors for Shoes orders and clickstream](#step-6)
 7. [Create Atlas MongoDB Source Connector for shoes and customers details](#step-7)
 8. [Stream Processing with Flink for getting trendy products, customer segements, and combine the records into one topic](#step-8)
-9. [Consume final topic and recommend shoes to customers with google gemini](#step-9)
+9. [Consume final topic and recommend shoes to customers with aws bedrock](#step-9)
 10. [Elasticsearch Monitoring](#step-10)
 11. [Clean Up Resources](#step-11)
 12. [Confluent Resources and Further Testing](#step-12)
@@ -449,7 +449,7 @@ CREATE TABLE customer_segments_table AS
     FROM <SHOE_ORDERS_TABLE_NAME>;
 ```
 
-8. Create the final topic containing all the data needed for Gemini to generate product recommendations. Replace `<SEGMENTED_TABLE_NAME>` with the correct table name from the previous segmentation query and execute the query.
+8. Create the final topic containing all the data needed for Bedrock to generate product recommendations. Replace `<SEGMENTED_TABLE_NAME>` with the correct table name from the previous segmentation query and execute the query.
 
 ```sql
 CREATE TABLE personalized_recommendation_input AS 
@@ -472,7 +472,7 @@ CREATE TABLE personalized_recommendation_input AS
     <img src="../common/images/integrations-connection.png" width=75% height=75%>
 </div>
 
-4. Copy the AWS Credentails from AWS Gameday dashboard.
+4. Copy the AWS Credentails from AWS gameday dashboard.
 
 <div align="center" padding=25px>
     <img src="../common/images/aws-creds.png" width=75% height=75%>
@@ -485,7 +485,7 @@ CREATE TABLE personalized_recommendation_input AS
     <img src="../common/images/bedrock-int.png" width=75% height=75%>
 </div>
 
-6. After creating the connection validate if the inegration is created sucessfully.
+6. After creating the connection validate if the integration is created sucessfully.
 
 <div align="center" padding=25px>
     <img src="../common/images/bedrock-int-validate.png" width=75% height=75%>
@@ -505,7 +505,7 @@ WITH (
     );
 ```
 
-8. Use the gemini model to get shoes/brands recommendation based upon the input gathered in the final topic.
+8. Use the bedrock model to get shoes/brands recommendation based upon the input gathered in the final topic.
 
 ```sql
 SELECT * FROM personalized_recommendation_input, 

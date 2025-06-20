@@ -460,24 +460,32 @@ CREATE TABLE personalized_recommendation_input AS
 
 ## <a name="step-9"></a>Consume final topic and recommend shoes to customers with google gemini
 
-1. Use confluent CLI to create connection with gemini
+1. Use confluent UI to create connection with bedrock. Navigate to integrations under environment.
 
-```sql
-confluent login
-confluent environment list
-confluent env use <Environment ID>
-confluent kafka cluster list
-confluent kafka cluster use <Kafka Cluster ID>
-confluent flink connection create googleai-ai-connection \
---cloud <Cloud Provider> \
---region <Region> \
---environment <Environment ID> \
---type googleai \
---endpoint https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent \
---api-key <Gemini API Key>
-```
+<div align="center" padding=25px>
+    <img src="../common/images/env-integrations.png" width=75% height=75%>
+</div>
 
-2. Use the same connection to create a model in flink.
+2. Navigate to connections and add connections.
+
+<div align="center" padding=25px>
+    <img src="../common/images/integrations-connection.png" width=75% height=75%>
+</div>
+
+5. Select Google AI, add gemini endpoint url and gemini API:
+    https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent
+    
+<div align="center" padding=25px>
+    <img src="../common/images/gemini-int.png" width=75% height=75%>
+</div>
+
+6. After creating the connection validate if the integration is created sucessfully.
+
+<div align="center" padding=25px>
+    <img src="../common/images/gemini-int-validate.png" width=75% height=75%>
+</div>
+
+7. Use the same connection to create a model in flink.
 
 ```sql
 CREATE MODEL RECOMMEND
@@ -491,7 +499,7 @@ WITH (
     );
 ```
 
-3. Use the gemini model to get shoes/brands recommendation based upon the input gathered in the final topic.
+8. Use the gemini model to get shoes/brands recommendation based upon the input gathered in the final topic.
 
 ```sql
 SELECT * FROM personalized_recommendation_input, 

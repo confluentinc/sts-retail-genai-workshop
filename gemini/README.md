@@ -310,7 +310,7 @@ The next step is to get initial shoes and customer data from MongoDB.
 | Tasks                              | 1                            |
 | Name                               | MongoDBSourceConnector_Shoes |
 
-**You can use [`shoes.json`](shoes.json) , [`shoe_customers.json`](shoe_customers.json) and upload those in Atlas MongoDB collection.  If Atlas access is not available then MongoDB Connection details will be provided.             
+**You can use [`shoes.json`](../common/shoes.json) , [`shoe_customers.json`](../common/shoe_customers.json) and upload those in Atlas MongoDB collection.  If Atlas access is not available then MongoDB Connection details will be provided.             
 </div>
 
 <br>

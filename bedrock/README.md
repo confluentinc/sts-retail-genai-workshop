@@ -310,7 +310,7 @@ The next step is to get initial shoes and customer data from MongoDB.
 | Tasks                              | 1                            |
 | Name                               | MongoDBSourceConnector_Shoes |
 
-**You can use [`shoes.json`](shoes.json) , [`shoe_customers.json`](shoe_customers.json) and upload those in Atlas MongoDB collection.  If Atlas access is not available then MongoDB Connection details will be provided.             
+**You can use [`shoes.json`](../common/shoes.json) , [`shoe_customers.json`](../common/shoe_customers.json) and upload those in Atlas MongoDB collection.  If Atlas access is not available then MongoDB Connection details will be provided.             
 </div>
 
 <br>
@@ -458,45 +458,59 @@ CREATE TABLE personalized_recommendation_input AS
     where s.event_rtime BETWEEN lt.window_start AND lt.window_end;
 ```
 
-## <a name="step-9"></a>Consume final topic and recommend shoes to customers with google gemini
+## <a name="step-9"></a>Consume final topic and recommend shoes to customers with aws bedrock
 
-1. Use confluent CLI to create connection with gemini
+1. Use confluent UI to create connection with bedrock. Navigate to integrations under environment.
+
+<div align="center" padding=25px>
+    <img src="../common/images/env-integrations.png" width=75% height=75%>
+</div>
+
+2. Navigate to connections and add connections.
+
+<div align="center" padding=25px>
+    <img src="../common/images/integrations-connection.png" width=75% height=75%>
+</div>
+
+4. Copy the AWS Credentails from AWS Gameday dashboard.
+
+<div align="center" padding=25px>
+    <img src="../common/images/aws-creds.png" width=75% height=75%>
+</div>
+
+5. Select Bedrock, add above aws credentials and bedrock endpoint url:
+    https://bedrock-runtime.us-east-1.amazonaws.com/model/meta.llama3-8b-instruct-v1:0/invoke
+    
+<div align="center" padding=25px>
+    <img src="../common/images/bedrock-int.png" width=75% height=75%>
+</div>
+
+6. After creating the connection validate if the inegration is created sucessfully.
+
+<div align="center" padding=25px>
+    <img src="../common/images/bedrock-int-validate.png" width=75% height=75%>
+</div>
+
+7. Use the same connection to create a model in flink.
 
 ```sql
-confluent login
-confluent environment list
-confluent env use <Environment ID>
-confluent kafka cluster list
-confluent kafka cluster use <Kafka Cluster ID>
-confluent flink connection create googleai-ai-connection \
---cloud <Cloud Provider> \
---region <Region> \
---environment <Environment ID> \
---type googleai \
---endpoint https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent \
---api-key <Gemini API Key>
-```
-
-2. Use the same connection to create a model in flink.
-
-```sql
-CREATE MODEL RECOMMEND
+CREATE MODEL RECOMMEND_BEDROCK
 INPUT (`text` VARCHAR(2147483647)) 
 OUTPUT (`output` VARCHAR(2147483647)) 
 WITH ( 
-    'googleai.connection' = 'googleai-ai-connection', 
-    'googleai.system_prompt' = 'Generate a personalized product recommendation message', 
-    'provider' = 'googleai', 
+    'bedrock.connection' = 'anz-workshop-connection', 
+    'bedrock.system_prompt' = 'Generate a personalized product recommendation message',
+    'provider' = 'bedrock', 
     'task' = 'text_generation' 
     );
 ```
 
-3. Use the gemini model to get shoes/brands recommendation based upon the input gathered in the final topic.
+8. Use the gemini model to get shoes/brands recommendation based upon the input gathered in the final topic.
 
 ```sql
 SELECT * FROM personalized_recommendation_input, 
 LATERAL TABLE( 
-    ML_PREDICT('RECOMMEND' ,'Customer Segment:' || customer_segment || 
+    ML_PREDICT('RECOMMEND_BEDROCK' ,'Customer Segment:' || customer_segment || 
     ' , Trending Brands:' || trending_brands || 
     ' , Trending Products:' || trending_shoes || 
     ' , \n Craft a concise, engaging message recommending one or two relevant products or brands. Tailor the tone to match the customer’s segment and include a compelling call-to-action to drive engagement.')
@@ -506,11 +520,11 @@ LATERAL TABLE(
 ```sql
 CREATE TABLE Recommendations AS SELECT customer_id , output FROM personalized_recommendation_input, 
 LATERAL TABLE( 
-    ML_PREDICT('RECOMMEND' ,'Customer Segment:' || customer_segment || 
+    ML_PREDICT('RECOMMEND_BEDROCK' ,'Customer Segment:' || customer_segment || 
     ' , Trending Brands:' || trending_brands || 
     ' , Trending Products:' || trending_shoes || 
     ' , \n Craft a concise, engaging message recommending one or two relevant products or brands. Tailor the tone to match the customer’s segment and include a compelling call-to-action to drive engagement.')
-    );   
+    );  
 ```
 
 <div align="center"><img src="../common/images/final-message.png" width=75% height=75%></div>

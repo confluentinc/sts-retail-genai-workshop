@@ -97,11 +97,11 @@ An environment contains clusters and its deployed components such as Apache Flin
 </div>
 
 4. Click **Begin Configuration**. 
-5. Choose GCP as preferred Cloud Provider, region (us-central1), and availability zone. 
+5. Choose AWS as preferred Cloud Provider, region (us-east-1), and availability zone. 
 6. Specify a **Cluster Name**. For the purpose of this lab, any name will work here. 
 
 <div align="center" padding=25px>
-    <img src="../common/images/create-cluster.png" width=70% height=70%>
+    <img src="../common/images/aws-create-cluster.png" width=70% height=70%>
 </div>
 
 7. View the associated *Configuration & Cost*, *Usage Limits*, and *Uptime SLA* information before launching. 
@@ -119,13 +119,13 @@ An environment contains clusters and its deployed components such as Apache Flin
 
 2. Select **Region** and then **Continue**. (You have to use the region where the cluster was created in the previous step)
 <div align="center" padding=25px>
-    <img src="../common/images/create-flink-pool-2.png" width=60% height=60%>
+    <img src="../common/images/aws-create-flink-pool-1.png" width=60% height=60%>
 </div>
 
 3. Name you Pool Name and set the capacity units (CFUs) to **10**. Click **Finish**.
 
 <div align="center" padding=25px>
-    <img src="../common/images/create-flink-pool-3.png" width=60% height=60%>
+    <img src="../common/images/aws-create-flink-pool-2.png" width=60% height=60%>
 </div>
 
 > **Note:** The capacity of a compute pool is measured in CFUs. Compute pools expand and shrink automatically based on the resources required by the statements using them. A compute pool without any running statements scale down to zero. The maximum size of a compute pool is configured during creation. 
@@ -135,19 +135,19 @@ An environment contains clusters and its deployed components such as Apache Flin
 5. Change your workspace name by clicking **settings button**. Click **Save changes** after you update the workspace name.
 
 <div align="center" padding=25px>
-    <img src="../common/images/flink-workspace-1.png" width=90% height=90%>
+    <img src="../common/images/aws-flink-workspace-1.png" width=90% height=90%>
 </div>
 
 6. Set the Catalog as your environment name.
 
 <div align="center" padding=25px>
-    <img src="../common/images/flink-workspace-2.png" width=60% height=60%>
+    <img src="../common/images/aws-flink-workspace-2.png" width=60% height=60%>
 </div>
 
 7. Set the Database as your cluster name.
 
 <div align="center" padding=25px>
-    <img src="../common/images/flink-workspace-3.png" width=60% height=60%>
+    <img src="../common/images/aws-flink-workspace-3.png" width=60% height=60%>
 </div>
 
 ***
@@ -399,8 +399,8 @@ CREATE TABLE results_aggregated (
     `timestamp` TIMESTAMP(3),
     WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '5' SECOND
 )  AS
-SELECT LISTAGG(`<BRAND_COLUMN>`,'\n') OVER w AS `trending_brands`,
-        LISTAGG(name,'\n') OVER w AS `trending_shoes`,
+SELECT LISTAGG(`<BRAND_COLUMN>`) OVER w AS `trending_brands`,
+        LISTAGG(`name`) OVER w AS `trending_shoes`,
         SUM(view_count) OVER w AS `collective_view_count`,
         `timestamp`
     FROM top_shoes_with_details
@@ -472,11 +472,13 @@ CREATE TABLE personalized_recommendation_input AS
     <img src="../common/images/integrations-connection.png" width=75% height=75%>
 </div>
 
-4. Copy the AWS Credentails from AWS gameday dashboard.
+4. Copy the AWS Credentails from AWS dashboard.
 
 <div align="center" padding=25px>
     <img src="../common/images/aws-creds.png" width=75% height=75%>
 </div>
+
+>**Note:** Alternatively you can create a new AWS user and assign AmazonBedrockFullAccess policy and generate the Key and secret for this user. <br> <div align="center"><img src="../common/images/aws-bedrock-creds.png" width=75% height=75%></div>
 
 5. Select Bedrock, add above aws credentials and bedrock endpoint url:
     https://bedrock-runtime.us-east-1.amazonaws.com/model/meta.llama3-8b-instruct-v1:0/invoke
@@ -498,7 +500,7 @@ CREATE MODEL RECOMMEND_BEDROCK
 INPUT (`text` VARCHAR(2147483647)) 
 OUTPUT (`output` VARCHAR(2147483647)) 
 WITH ( 
-    'bedrock.connection' = 'anz-workshop-connection', 
+    'bedrock.connection' = 'bedrock-connection', 
     'bedrock.system_prompt' = 'Generate a personalized product recommendation message',
     'provider' = 'bedrock', 
     'task' = 'text_generation' 
@@ -513,7 +515,7 @@ LATERAL TABLE(
     ML_PREDICT('RECOMMEND_BEDROCK' ,'Customer Segment:' || customer_segment || 
     ' , Trending Brands:' || trending_brands || 
     ' , Trending Products:' || trending_shoes || 
-    ' , \n Craft a concise, engaging message recommending one or two relevant products or brands. Tailor the tone to match the customer’s segment and include a compelling call-to-action to drive engagement.')
+    ' , \n Craft a concise, engaging message without any input and system level parameters and only give me Recommendation Message, recommending one or two relevant products or brands. Tailor the tone to match the customer’s segment and include a compelling call-to-action to drive engagement. remove any debrock specific headers and give final message which can be shown as a string.')
     );
 ```
 
@@ -523,7 +525,7 @@ LATERAL TABLE(
     ML_PREDICT('RECOMMEND_BEDROCK' ,'Customer Segment:' || customer_segment || 
     ' , Trending Brands:' || trending_brands || 
     ' , Trending Products:' || trending_shoes || 
-    ' , \n Craft a concise, engaging message recommending one or two relevant products or brands. Tailor the tone to match the customer’s segment and include a compelling call-to-action to drive engagement.')
+    ' , \n Craft a concise, engaging message without any input and system level parameters and only give me Recommendation Message, recommending one or two relevant products or brands. Tailor the tone to match the customer’s segment and include a compelling call-to-action to drive engagement. remove any debrock specific headers and give final message which can be shown as a string.')
     );  
 ```
 

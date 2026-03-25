@@ -473,7 +473,7 @@ CREATE TABLE personalized_recommendation_input AS
 </div>
 
 5. Select Google AI, add gemini endpoint url and gemini API:
-    https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent
+    https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent
     
 <div align="center" padding=25px>
     <img src="../common/images/gemini-int.png" width=75% height=75%>
@@ -508,7 +508,7 @@ LATERAL TABLE(
     ' , Trending Brands:' || trending_brands || 
     ' , Trending Products:' || trending_shoes || 
     ' , \n Craft a concise, engaging message recommending one or two relevant products or brands. Tailor the tone to match the customer’s segment and include a compelling call-to-action to drive engagement.')
-    );
+    ) LIMIT 10;
 ```
 
 ```sql
@@ -518,7 +518,7 @@ LATERAL TABLE(
     ' , Trending Brands:' || trending_brands || 
     ' , Trending Products:' || trending_shoes || 
     ' , \n Craft a concise, engaging message recommending one or two relevant products or brands. Tailor the tone to match the customer’s segment and include a compelling call-to-action to drive engagement.')
-    );   
+    ) LIMIT 10;   
 ```
 
 <div align="center"><img src="../common/images/final-message.png" width=75% height=75%></div>
@@ -622,5 +622,4 @@ Here are some links to check out if you are interested in further testing:
 - [Elasticsearch Sink Connector](https://docs.confluent.io/cloud/current/connectors/cc-elasticsearch-service-sink.html)
 
 ***
-
 

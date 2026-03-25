@@ -508,7 +508,7 @@ LATERAL TABLE(
     ' , Trending Brands:' || trending_brands || 
     ' , Trending Products:' || trending_shoes || 
     ' , \n Craft a concise, engaging message recommending one or two relevant products or brands. Tailor the tone to match the customer’s segment and include a compelling call-to-action to drive engagement.')
-    ) LIMIT 10;
+    ) LIMIT 2;
 ```
 
 ```sql
@@ -518,7 +518,7 @@ LATERAL TABLE(
     ' , Trending Brands:' || trending_brands || 
     ' , Trending Products:' || trending_shoes || 
     ' , \n Craft a concise, engaging message recommending one or two relevant products or brands. Tailor the tone to match the customer’s segment and include a compelling call-to-action to drive engagement.')
-    ) LIMIT 10;   
+    ) LIMIT 2;   
 ```
 
 <div align="center"><img src="../common/images/final-message.png" width=75% height=75%></div>
